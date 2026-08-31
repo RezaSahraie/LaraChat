@@ -1,147 +1,293 @@
-# LaraChat — Learning Notes
+# LaraChat — Backend Learning Notes
 
-> Personal learning notes for building LaraChat with Laravel, React, Inertia, and modern backend architecture.
+## 01. Project Setup & Infrastructure
 
----
+### Project
 
-## 1. Project Overview
+LaraChat is a real-world chat application built primarily for learning backend development with Laravel.
 
-### Project Name
+The backend is the main learning focus. The frontend will be built separately with React, Inertia, and Tailwind CSS.
 
-**LaraChat**
+### Current Stack
 
-### Goal
-
-LaraChat is a real-time messaging application built primarily as a learning project for professional Laravel backend development.
-
-The main focus of the project is learning backend concepts through building a realistic application rather than creating a simple CRUD project.
-
-### Core Principles
-
-* Backend development is the primary learning focus.
-* Frontend is built with React and Inertia.js.
-* Frontend uses JSX.
-* UI is custom-designed and does not use Laravel starter templates.
-* The application supports Persian and English.
-* The application supports Light and Dark modes.
-* Docker is used for the development environment.
-* Every meaningful change should be tested and committed.
-* Git history should remain clean and meaningful.
-* New infrastructure should be introduced only when it solves a real project requirement.
-
----
-
-## 2. Initial Technology Stack
-
-* Laravel 13
-* PHP 8.4
-* Inertia.js
-* React
-* JSX
-* Tailwind CSS
-* MySQL
+* Laravel 13.29.0
+* PHP 8.5.9 inside Docker
+* MySQL 8.4
 * Redis
-* Laravel Reverb
-* Laravel Echo
-* Docker
+* Docker Desktop
+* Docker Compose
+* Composer 2.10.2
+* Node.js 24
+* npm 11
 * Git
-* GitHub
-
-Additional tools will be introduced only when they become necessary.
 
 ---
 
-## 3. Learning Approach
+## Docker
 
-For every feature:
+### Services
 
-1. Understand the problem.
-2. Learn the Laravel concept behind it.
-3. Design the solution.
-4. Implement it.
-5. Test it.
-6. Review the implementation.
-7. Commit the change.
-8. Document important concepts and lessons.
+The project currently has three Docker services:
 
-The goal is not only to make the feature work, but to understand why it works and why the chosen architecture is appropriate.
+```text
+laravel.test
+mysql
+redis
+```
 
----
+### Architecture
 
-## 4. Git Workflow
+```text
+Laravel Container
+       │
+       ├──────────────► MySQL Container
+       │                  mysql:3306
+       │
+       └──────────────► Redis Container
+                          redis:6379
+```
 
-Each meaningful change should have its own commit.
+Services communicate through the Docker Compose network.
 
-Commit messages should follow Conventional Commits.
+Therefore Laravel uses:
 
-Examples:
+```env
+DB_HOST=mysql
+REDIS_HOST=redis
+```
 
-* `feat:` New functionality
-* `fix:` Bug fix
-* `refactor:` Code restructuring without changing behavior
-* `test:` Tests
-* `docs:` Documentation
-* `chore:` Maintenance and configuration
-* `style:` Formatting/style-only changes
+instead of `localhost`.
 
-GitHub Desktop is used for creating commits.
+### Important Concepts
 
----
+#### Image
 
-## 5. Important Concepts
+A Docker image is a blueprint used to create containers.
 
-This section will be expanded throughout the project.
+#### Container
 
-### Laravel
+A container is a running instance of an image.
 
-To be documented as new concepts are learned.
+#### Network
 
-### Database
+Docker Compose creates a private network where services can communicate using their service names.
 
-To be documented as database architecture is designed.
+For example:
 
-### Redis
-
-To be documented when Redis is introduced.
-
-### Queues
-
-To be documented when background jobs are introduced.
-
-### Realtime
-
-To be documented when Laravel Reverb and broadcasting are introduced.
-
-### Authentication
-
-To be documented when phone-number authentication and OTP are implemented.
-
-### Authorization
-
-To be documented when access-control rules are implemented.
-
-### Testing
-
-To be documented as feature and unit tests are introduced.
-
-### Docker
-
-To be documented as the development environment is configured.
+```text
+Laravel → mysql:3306
+Laravel → redis:6379
+```
 
 ---
 
-## 6. Problems & Solutions
+## MySQL
 
-This section records important errors, their causes, and their solutions.
+The initial Laravel project was created with SQLite.
+
+After configuring Docker, MySQL became the application's database:
+
+```env
+DB_CONNECTION=mysql
+DB_HOST=mysql
+DB_PORT=3306
+DB_DATABASE=laravel
+DB_USERNAME=sail
+```
+
+The initial migrations were then executed against MySQL.
+
+### Migration Status
+
+```text
+create_users_table   [1] Ran
+create_cache_table   [1] Ran
+create_jobs_table    [1] Ran
+```
+
+### Important Lesson
+
+Migration status belongs to the database being used.
+
+The migrations that originally ran on SQLite did not mean that the new MySQL database had those tables.
+
+Running:
+
+```bash
+php artisan migrate
+```
+
+created the migration table and executed the migrations against MySQL.
 
 ---
 
-## 7. Important Commands
+## Redis
 
-Useful commands will be added here throughout the project.
+Redis connectivity was tested from inside the Laravel container using Tinker.
+
+Test:
+
+```php
+use Illuminate\Support\Facades\Redis;
+
+Redis::set('larachat:test', 'hello');
+
+Redis::get('larachat:test');
+```
+
+Result:
+
+```text
+"hello"
+```
+
+This confirms that:
+
+```text
+Laravel → Redis
+```
+
+is working correctly.
+
+### Why Redis?
+
+Redis will potentially be used later for:
+
+* Cache
+* Queue-related infrastructure
+* Rate limiting
+* Realtime/broadcasting infrastructure
+
+We should only introduce each use case when it has a real architectural reason.
 
 ---
 
-## 8. Lessons Learned
+## Commands Learned
 
-Important lessons and practical observations will be recorded here throughout development.
+### Validate Compose configuration
+
+```bash
+docker compose config
+```
+
+### Build images
+
+```bash
+docker compose build
+```
+
+### Start containers
+
+```bash
+docker compose up -d
+```
+
+### Check container status
+
+```bash
+docker compose ps
+```
+
+### Execute a Laravel command inside the container
+
+```bash
+docker compose exec laravel.test php artisan about
+```
+
+### Check migrations
+
+```bash
+docker compose exec laravel.test php artisan migrate:status
+```
+
+### Run migrations
+
+```bash
+docker compose exec laravel.test php artisan migrate
+```
+
+### Open Laravel Tinker
+
+```bash
+docker compose exec laravel.test php artisan tinker
+```
+
+---
+
+## Problems & Solutions
+
+### Sail could not start from PowerShell
+
+Running:
+
+```bash
+./vendor/bin/sail up -d
+```
+
+resulted in:
+
+```text
+WSL ERROR: execvpe(/bin/bash) failed: No such file or directory
+```
+
+Docker itself was working correctly.
+
+Instead of depending on the Sail wrapper, Docker Compose was used directly:
+
+```bash
+docker compose up -d
+```
+
+This successfully started all services.
+
+### Missing WWWUSER / WWWGROUP
+
+Docker Compose initially reported:
+
+```text
+The "WWWGROUP" variable is not set.
+The "WWWUSER" variable is not set.
+```
+
+The environment was configured with:
+
+```env
+WWWUSER=1000
+WWWGROUP=1000
+APP_PORT=8000
+```
+
+After that:
+
+```bash
+docker compose config
+```
+
+completed without warnings.
+
+---
+
+## Current Status
+
+Infrastructure is working:
+
+```text
+Laravel       ✅
+PHP           ✅
+MySQL         ✅
+Redis         ✅
+Docker        ✅
+Migrations    ✅
+Redis test    ✅
+```
+
+The next major phase is installing and configuring the frontend stack:
+
+```text
+Inertia
+React
+Tailwind CSS
+Vite
+```
+
+After that we will begin designing the actual chat domain and backend architecture.
