@@ -31,6 +31,14 @@ class User extends Authenticatable
         ];
     }
 
+    /**
+     * Get all conversations that this user participates in.
+     * 
+     * Defines a many-to-many relationship between users and conversations.
+     * The pivot table 'conversation_user' stores the participation records.
+     *
+     * @return BelongsToMany
+     */
     public function conversations(): BelongsToMany {
         return $this->belongsToMany(Conversation::class);
     }

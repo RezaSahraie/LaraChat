@@ -7,12 +7,25 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 class Conversation extends Model
 {
+    /**
+     * The attributes that are mass assignable.
+     *
+     * @var array<int, string>
+     */
     protected $fillable = [
         'type',
         'name',
     ];
 
-    public function user() : BelongsToMany {
+    /**
+     * Get all users participating in this conversation.
+     * 
+     * This defines a many-to-many relationship between conversations and users.
+     * The pivot table 'conversation_user' stores the participants.
+     *
+     * @return BelongsToMany
+     */
+    public function users() : BelongsToMany {
         return $this->belongsToMany(User::class);
     }
 }
