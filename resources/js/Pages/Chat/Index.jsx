@@ -88,7 +88,7 @@ export default function Index({
                                     </div>
 
                                     <div className="truncate text-sm text-white/40">
-                                        {conversation.messages?.[0]?.body ??
+                                        {conversation.messages?.[0]?.content ??
                                             'No messages yet'}
                                     </div>
 
@@ -182,7 +182,7 @@ export default function Index({
                                             </div>
 
                                             <div className="rounded-2xl rounded-tl-md bg-white/[0.06] px-4 py-3">
-                                                {message.body}
+                                                {message.content}
                                             </div>
 
                                         </div>
