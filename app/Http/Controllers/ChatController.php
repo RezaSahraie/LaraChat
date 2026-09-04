@@ -32,4 +32,26 @@ class ChatController extends Controller
             'conversations' => $conversations,
         ]);
     }
+
+    public function show(Conversation $conversation): Response{
+        $conversation->load([
+            'users',
+            'messages.user',
+            'messages.replyTo',
+        ]);
+
+        return Inertia::render('Chat/Index', [
+            'conversations' => Conversation::query()
+                ->with([
+                    'users',
+                    'messages' => fn ($query) => $query
+                        ->latest()
+                        ->limit(1),
+                ])
+                ->latest('updated_at')
+                ->get(),
+
+            'selectedConversation' => $conversation,
+        ]);
+    }
 }

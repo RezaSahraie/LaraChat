@@ -11,3 +11,4 @@ Route::get('/', function () {
 Route::post('/conversations/{conversation}/messages', [MessageController::class, 'store'])->name('conversations.messages.store');
 
 Route::get('/chat', [ChatController::class, 'index'])->name('chat.index');
+Route::get('/chat/{conversation}', [ChatController::class, 'show'])->name('chat.show');
