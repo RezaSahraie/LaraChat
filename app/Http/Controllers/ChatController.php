@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Conversation;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -19,14 +20,12 @@ class ChatController extends Controller
      *
      * @return Response The Inertia response rendering the Chat/Index view
      */
-    public function index(): Response
-    {
-        // Fetch all conversations with eager loading
-        $conversations = Conversation::query()
-            ->with(['users', 'messages' => function ($query) {
-                $query->latest()->limit(1);
-            }])->latest('updated_at')->get();
-
+    public function index(Request $request): Response {
+        // Fetch all conversations that belong to the authenticated user
+        $conversations = $request->user()->conversations()->with([
+            'users',
+            'messages' => fn ($query) => $query->latest()->limit(1),
+        ])->latest('updated_at')->get();
         
         // Return the Inertia response
         return Inertia::render('Chat/Index', [
