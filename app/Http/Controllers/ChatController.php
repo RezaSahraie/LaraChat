@@ -33,7 +33,7 @@ class ChatController extends Controller
         ]);
     }
 
-    public function show(Conversation $conversation): Response{
+    public function show(Request $request, Conversation $conversation): Response {
         Gate::authorize('view', $conversation);     // Authorization check: Only allow if user is a participant
 
         $conversation->load([
@@ -43,15 +43,16 @@ class ChatController extends Controller
         ]);
 
         return Inertia::render('Chat/Index', [
-            'conversations' => Conversation::query()
-                ->with([
-                    'users',
-                    'messages' => fn ($query) => $query
-                        ->latest()
-                        ->limit(1),
-                ])
-                ->latest('updated_at')
-                ->get(),
+            'conversations' => $request->user()
+            ->conversations()
+            ->with([
+                'users',
+                'messages' => fn ($query) => $query
+                    ->latest()
+                    ->limit(1),
+            ])
+            ->latest('updated_at')
+            ->get(),
 
             'selectedConversation' => $conversation,
         ]);
