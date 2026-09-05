@@ -68,4 +68,65 @@ class MessageTest extends TestCase
             'content' => 'Hello LaraChat!',
         ]);
     }
+
+
+    /**
+     * Test that a user who is not a member of a conversation
+     * cannot send messages to that conversation.
+     *
+     * This test verifies the authorization logic that restricts message
+     * sending to only participants of the conversation. It ensures that:
+     * 1. Non-members receive a 403 Forbidden response
+     * 2. The message is not stored in the database
+     *
+     * @return void
+     */
+    public function test_non_member_cannot_send_message_to_conversation(): void
+    {
+        /**
+         * ARRANGE: Prepare the test environment
+         */
+        // Create the first user (non-member)
+        $user = User::create([
+            'name' => 'Reza',
+            'email' => 'reza@test.com',
+            'password' => 'password',
+        ]);
+
+        // Create a second user (will be the conversation member)
+        $otherUser = User::create([
+            'name' => 'John',
+            'email' => 'john@test.com',
+            'password' => 'password',
+        ]);
+
+        // Create a new conversation
+        $conversation = Conversation::create([
+            'name' => 'Private Conversation',
+        ]);
+
+        // Add only the otherUser to the conversation - Note: $user is NOT attached to this conversation
+        $conversation->users()->attach($otherUser->id);
+
+        /**
+         * ACT: Attempt to send a message as a non-member
+         */
+        // Simulate an authenticated request as $user (non-member)
+        $response = $this
+            ->actingAs($user)       // Authenticate as the non-member user
+            ->post("/conversations/{$conversation->id}/messages", [
+                'content' => 'Unauthorized message',
+            ]);
+
+        /**
+         * ASSERT: Verify the results
+         */
+        // Assert that the response is a 403 Forbidden - This confirms the authorization check is working
+        $response->assertForbidden();
+
+        // Assert that the unauthorized message was NOT saved to the database
+        $this->assertDatabaseMissing('messages', [
+            'content' => 'Unauthorized message',
+        ]);
+    }
 }

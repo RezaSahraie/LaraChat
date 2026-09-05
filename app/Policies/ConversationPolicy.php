@@ -4,7 +4,6 @@ namespace App\Policies;
 
 use App\Models\Conversation;
 use App\Models\User;
-use Illuminate\Auth\Access\Response;
 
 class ConversationPolicy
 {
@@ -62,5 +61,12 @@ class ConversationPolicy
     public function forceDelete(User $user, Conversation $conversation): bool
     {
         return false;
+    }
+
+    /**
+     * Determine whether the user can send message.
+     */
+    public function sendMessage(User $user, Conversation $conversation): bool{
+        return $conversation->users()->whereKey($user->id)->exists();
     }
 }
