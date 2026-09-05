@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Conversation;
+use Illuminate\Support\Facades\Gate;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -34,6 +35,8 @@ class ChatController extends Controller
     }
 
     public function show(Conversation $conversation): Response{
+        Gate::authorize('view', $conversation);     // Authorization check: Only allow if user is a participant
+
         $conversation->load([
             'users',
             'messages.user',
