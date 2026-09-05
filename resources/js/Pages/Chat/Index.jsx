@@ -1,5 +1,5 @@
 import React from 'react';
-import { Link } from '@inertiajs/react';
+import { Link, useForm } from '@inertiajs/react';
 
 export default function Index({
     conversations,
@@ -7,6 +7,33 @@ export default function Index({
 }) {
     const messages = selectedConversation?.messages ?? [];
 
+    const {
+        data,
+        setData,
+        post,
+        processing,
+        errors,
+        reset,
+    } = useForm({
+        content: '',
+        reply_to_id: null,
+    });
+
+    const submitMessage = (event) => {
+        event.preventDefault();
+
+        if (!selectedConversation || !data.content.trim()) {
+            return;
+        }
+
+        post(`/conversations/${selectedConversation.id}/messages`, {
+            preserveScroll: true,
+
+            onSuccess: () => {
+                reset('content');
+            },
+        });
+    };
     return (
         <div className="min-h-screen bg-[#080b14] text-white">
             <div className="flex h-screen">
@@ -199,28 +226,50 @@ export default function Index({
 
                     {/* Composer */}
                     {selectedConversation && (
-                        <div className="border-t border-white/10 p-4">
+                    <div className="border-t border-white/10 p-4">
+
+                        <form onSubmit={submitMessage}>
 
                             <div className="flex items-center gap-3 rounded-2xl border border-white/10 bg-white/[0.04] p-2">
 
-                                <button className="p-3 text-white/50">
+                                <button
+                                    type="button"
+                                    className="p-3 text-white/50 transition hover:text-white"
+                                >
                                     📎
                                 </button>
 
                                 <input
                                     type="text"
+                                    value={data.content}
+                                    onChange={(event) =>
+                                        setData('content', event.target.value)
+                                    }
                                     placeholder="Type a message..."
                                     className="flex-1 bg-transparent px-2 py-3 outline-none placeholder:text-white/30"
+                                    disabled={processing}
                                 />
 
-                                <button className="rounded-xl bg-violet-600 px-5 py-3">
-                                    ➤
+                                <button
+                                    type="submit"
+                                    disabled={processing || !data.content.trim()}
+                                    className="rounded-xl bg-violet-600 px-5 py-3 transition hover:bg-violet-500 disabled:cursor-not-allowed disabled:opacity-50"
+                                >
+                                    {processing ? '...' : '➤'}
                                 </button>
 
                             </div>
 
-                        </div>
-                    )}
+                            {errors.content && (
+                                <p className="mt-2 px-2 text-sm text-red-400">
+                                    {errors.content}
+                                </p>
+                            )}
+
+                        </form>
+
+                    </div>
+                )}
 
                 </main>
 
