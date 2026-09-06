@@ -75,10 +75,12 @@ export default function Index({
                             <h1 className="text-xl font-semibold">
                                 Conversations
                             </h1>
-
-                            <button className="rounded-xl bg-violet-600 px-3 py-2">
+                            
+                            <Link
+                                href="/chat/create"
+                                className="rounded-xl bg-violet-600 px-3 py-2 transition hover:bg-violet-500">
                                 +
-                            </button>
+                            </Link>
 
                         </div>
 
